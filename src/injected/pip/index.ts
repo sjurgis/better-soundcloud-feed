@@ -33,10 +33,16 @@ async function openPipWindow(): Promise<void> {
 function closePipWindow(): void {
   controller?.stopPolling();
   controller = null;
-  documentPictureInPicture.window?.close();
+  if ("documentPictureInPicture" in window) documentPictureInPicture.window?.close();
 }
 
 export function togglePip(): void {
+  // Safari (and Firefox without the pref) have no Document PiP. The button is
+  // hidden there, but guard anyway so a stray command can't throw.
+  if (!("documentPictureInPicture" in window)) {
+    log.info("Document Picture-in-Picture is not supported in this browser");
+    return;
+  }
   if (documentPictureInPicture.window) {
     closePipWindow();
   } else {

@@ -297,6 +297,9 @@ function HelpModalContent({ onClose }: { onClose: () => void }) {
             <strong>Firefox 148+</strong> — requires enabling <code>dom.documentpip.enabled</code>{" "}
             in <code>about:config</code>
           </li>
+          <li>
+            <strong>Safari</strong> — not supported (no Document PiP API); the PiP button is hidden
+          </li>
         </ul>
         <p>
           Configure PiP in the <strong>Playback Settings</strong> dialog (gear icon). All PiP

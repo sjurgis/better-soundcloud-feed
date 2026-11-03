@@ -13,14 +13,30 @@
  * exposes nothing.
  */
 
+interface MaybeExtensionRuntime {
+  runtime?: { id?: unknown; getURL?: (path: string) => string };
+}
+
 interface MaybeExtensionGlobal {
-  chrome?: { runtime?: { id?: unknown } };
+  chrome?: MaybeExtensionRuntime;
+  browser?: MaybeExtensionRuntime;
+}
+
+/**
+ * The extension API namespace for this world, if any. Chrome exposes `chrome`,
+ * Firefox exposes both, and Safari exposes `browser` (with `chrome` as an
+ * alias in most versions), so check both.
+ */
+function extensionApi(): MaybeExtensionRuntime | undefined {
+  const g = globalThis as MaybeExtensionGlobal;
+  if (typeof g.browser?.runtime?.id === "string") return g.browser;
+  if (typeof g.chrome?.runtime?.id === "string") return g.chrome;
+  return undefined;
 }
 
 /** True when running as an isolated-world content script rather than in the page. */
 export function isIsolatedWorld(): boolean {
-  const ext = (globalThis as MaybeExtensionGlobal).chrome;
-  return typeof ext?.runtime?.id === "string";
+  return extensionApi() !== undefined;
 }
 
 /**
@@ -33,7 +49,8 @@ export function isIsolatedWorld(): boolean {
  */
 export function injectViaScriptTag(doc: Document = document): HTMLScriptElement {
   const script = doc.createElement("script");
-  script.src = chrome.runtime.getURL("injected.js");
+  const getURL = extensionApi()?.runtime?.getURL ?? chrome.runtime.getURL;
+  script.src = getURL("injected.js");
   script.onload = () => script.remove();
   (doc.head ?? doc.documentElement).prepend(script);
   return script;

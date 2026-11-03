@@ -4,7 +4,7 @@
 
 # Better SoundCloud Feed
 
-Chrome/Edge/Firefox extension (Manifest V3) that filters your SoundCloud feed and adds extra playback controls.
+Chrome/Edge/Firefox/Safari extension (Manifest V3) that filters your SoundCloud feed and adds extra playback controls.
 
 ## Install
 
@@ -36,6 +36,28 @@ Then load the extension in your browser:
 2. Click **Load Temporary Add-on**
 3. Select `dist/manifest.json`
 
+**Safari (macOS):**
+
+Safari needs the extension wrapped in a small macOS app. On a Mac with Xcode installed:
+
+```bash
+pnpm install
+pnpm build:safari   # pnpm build + safari-web-extension-converter + xcodebuild (ad-hoc signed)
+cp -R "safari/build/Build/Products/Release/Better SoundCloud Feed.app" ~/Applications/
+open ~/Applications/"Better SoundCloud Feed.app"
+```
+
+Then in Safari (17+; Safari 18+ recommended, since earlier versions ignore `world: "MAIN"` and fall back to a slower `<script>` tag injection):
+
+1. **Safari > Settings > Advanced** — tick **Show features for web developers**
+2. **Develop > Allow Unsigned Extensions** (asks for your Mac password; Safari turns this off again every time it quits, so repeat after restarting Safari)
+3. **Safari > Settings > Extensions** — tick **Better SoundCloud Feed**
+4. Open [soundcloud.com](https://soundcloud.com/), click the extension's toolbar icon (or the puzzle-piece/permission prompt) and choose **Always Allow on This Website**, then reload the page
+
+To avoid step 2 on every launch, open `safari/Better SoundCloud Feed/Better SoundCloud Feed.xcodeproj` in Xcode, set **Signing & Capabilities > Team** to your (free) personal team for both targets, and build/run from Xcode. `SKIP_XCODEBUILD=1 pnpm build:safari` only generates the Xcode project.
+
+Safari limitations: Document Picture-in-Picture is not available in Safari, so the PiP button and settings are hidden/disabled. Filters, seek buttons and settings work the same as in Chrome.
+
 Navigate to [soundcloud.com](https://soundcloud.com/) — a filter bar appears above your feed, and extension controls appear in the player bar.
 
 ## Development
@@ -43,6 +65,7 @@ Navigate to [soundcloud.com](https://soundcloud.com/) — a filter bar appears a
 ```bash
 pnpm dev          # Build in watch mode
 pnpm build        # Production build
+pnpm build:safari # Safari app via Xcode (macOS only)
 pnpm test         # Unit tests (Vitest)
 pnpm check        # Lint (Oxlint) + format check (Oxfmt)
 pnpm typecheck    # TypeScript strict mode
@@ -92,7 +115,7 @@ When you switch away from the SoundCloud tab, an always-on-top mini player appea
 - Like/unlike button (synced with SoundCloud)
 - Current time and total duration
 
-Requires Chrome 116+ or Edge 116+. Firefox 148+ supports it with `dom.documentpip.enabled` enabled in `about:config`.
+Requires Chrome 116+ or Edge 116+. Firefox 148+ supports it with `dom.documentpip.enabled` enabled in `about:config`. Not available in Safari.
 
 Configure PiP behaviour in extension settings:
 

@@ -8,7 +8,8 @@ const isDev = process.argv.includes("--mode") && process.argv.includes("developm
 const iife = {
   sourcemap: isDev ? ("inline" as const) : (true as const),
   minify: !isDev,
-  target: "chrome120" as const,
+  // Safari 18+ is needed anyway for `world: "MAIN"` content scripts.
+  target: ["chrome120", "safari18"],
 };
 
 export default defineConfig({

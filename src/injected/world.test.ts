@@ -6,8 +6,13 @@ function setChromeGlobal(value: unknown): void {
   Object.defineProperty(globalThis, "chrome", { value, configurable: true, writable: true });
 }
 
+function setBrowserGlobal(value: unknown): void {
+  Object.defineProperty(globalThis, "browser", { value, configurable: true, writable: true });
+}
+
 afterEach(() => {
   Reflect.deleteProperty(globalThis, "chrome");
+  Reflect.deleteProperty(globalThis, "browser");
 });
 
 describe("isIsolatedWorld", () => {
@@ -25,9 +30,28 @@ describe("isIsolatedWorld", () => {
     expect(isIsolatedWorld()).toBe(false);
   });
 
+  it("returns true when only browser.runtime.id exists (Safari isolated world)", () => {
+    setBrowserGlobal({ runtime: { id: "ABCDEF-1234" } });
+    expect(isIsolatedWorld()).toBe(true);
+  });
+
   it("returns true when runtime.id is a string (isolated content-script world)", () => {
     setChromeGlobal({ runtime: { id: "abcdefghijklmnop" } });
     expect(isIsolatedWorld()).toBe(true);
+  });
+});
+
+describe("injectViaScriptTag (Safari browser namespace)", () => {
+  it("uses browser.runtime.getURL when chrome is absent", () => {
+    setBrowserGlobal({
+      runtime: {
+        id: "ABCDEF-1234",
+        getURL: (path: string) => `safari-web-extension://ABCDEF-1234/${path}`,
+      },
+    });
+    const doc = document.implementation.createHTMLDocument();
+    const script = injectViaScriptTag(doc);
+    expect(script.src).toBe("safari-web-extension://ABCDEF-1234/injected.js");
   });
 });
 

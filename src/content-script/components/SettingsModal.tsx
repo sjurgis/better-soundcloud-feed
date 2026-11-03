@@ -68,7 +68,8 @@ function SettingsModalContent({ onClose }: { onClose: () => void }) {
           <p class="scf-help-text">
             Document Picture-in-Picture is not supported in this browser. Chrome 116+ and Edge 116+
             support it natively. Firefox 148+ requires enabling <code>dom.documentpip.enabled</code>{" "}
-            in <code>about:config</code>.
+            in <code>about:config</code>. Safari does not support it yet, so PiP is unavailable
+            there; filters and seek buttons work normally.
           </p>
         )}
         <label class={`scf-toggle-row${!isPipSupported ? " scf-toggle-row-disabled" : ""}`}>
