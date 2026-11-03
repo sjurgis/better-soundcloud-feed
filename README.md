@@ -38,14 +38,16 @@ Then load the extension in your browser:
 
 **Safari (macOS):**
 
-Safari needs the extension wrapped in a small macOS app. On a Mac with Xcode installed:
+Safari needs the extension wrapped in a small macOS app. On a Mac with Xcode (or the Command Line Tools) installed:
 
 ```bash
 pnpm install
-pnpm build:safari   # pnpm build + safari-web-extension-converter + xcodebuild (ad-hoc signed)
-cp -R "safari/build/Build/Products/Release/Better SoundCloud Feed.app" ~/Applications/
-open ~/Applications/"Better SoundCloud Feed.app"
+pnpm build:safari:swiftc   # pnpm build + swiftc + ad-hoc codesign, no Xcode project needed
+cp -R "safari/manual/Better SoundCloud Feed.app" ~/Applications/
+open ~/Applications/"Better SoundCloud Feed.app"   # registers the extension with Safari
 ```
+
+Alternatively `pnpm build:safari` generates a full Xcode project with Apple's `safari-web-extension-converter` and builds it with `xcodebuild` (output in `safari/build/Build/Products/Release/`). That needs a fully set-up Xcode; if the converter says "A required plugin failed to load", open Xcode once (or run `xcodebuild -runFirstLaunch`) to install its components.
 
 Then in Safari (17+; Safari 18+ recommended, since earlier versions ignore `world: "MAIN"` and fall back to a slower `<script>` tag injection):
 
@@ -54,7 +56,7 @@ Then in Safari (17+; Safari 18+ recommended, since earlier versions ignore `worl
 3. **Safari > Settings > Extensions** — tick **Better SoundCloud Feed**
 4. Open [soundcloud.com](https://soundcloud.com/), click the extension's toolbar icon (or the puzzle-piece/permission prompt) and choose **Always Allow on This Website**, then reload the page
 
-To avoid step 2 on every launch, open `safari/Better SoundCloud Feed/Better SoundCloud Feed.xcodeproj` in Xcode, set **Signing & Capabilities > Team** to your (free) personal team for both targets, and build/run from Xcode. `SKIP_XCODEBUILD=1 pnpm build:safari` only generates the Xcode project.
+To avoid step 2 on every launch, run `SKIP_XCODEBUILD=1 pnpm build:safari`, open `safari/Better SoundCloud Feed/Better SoundCloud Feed.xcodeproj` in Xcode, set **Signing & Capabilities > Team** to your (free) personal team for both targets, and build/run from Xcode.
 
 Safari limitations: Document Picture-in-Picture is not available in Safari, so the PiP button and settings are hidden/disabled. Filters, seek buttons and settings work the same as in Chrome.
 
@@ -65,7 +67,8 @@ Navigate to [soundcloud.com](https://soundcloud.com/) — a filter bar appears a
 ```bash
 pnpm dev          # Build in watch mode
 pnpm build        # Production build
-pnpm build:safari # Safari app via Xcode (macOS only)
+pnpm build:safari:swiftc # Safari app via swiftc (macOS only)
+pnpm build:safari        # Safari app via Xcode project (macOS only)
 pnpm test         # Unit tests (Vitest)
 pnpm check        # Lint (Oxlint) + format check (Oxfmt)
 pnpm typecheck    # TypeScript strict mode
