@@ -60,45 +60,57 @@ xcrun swiftc -O -sdk "$SDK" -target "$TARGET" -module-name BSFApp \
   safari-src/App.swift -framework Cocoa -framework SafariServices \
   -o "$APP/Contents/MacOS/$APP_NAME"
 
-plist() { /usr/libexec/PlistBuddy "$@" >/dev/null; }
+# Info.plists, written as XML (values are plain ASCII, no escaping needed).
+write_plist() { # file, then key/type/value triples (type: string|array1)
+  local f="$1"; shift
+  {
+    echo '<?xml version="1.0" encoding="UTF-8"?>'
+    echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+    echo '<plist version="1.0"><dict>'
+    while [[ $# -gt 0 ]]; do
+      echo "  <key>$1</key><string>$2</string>"
+      shift 2
+    done
+    echo '  <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>'
+    if [[ "$f" == *.appex/* ]]; then
+      echo '  <key>NSExtension</key><dict>'
+      echo '    <key>NSExtensionPointIdentifier</key><string>com.apple.Safari.web-extension</string>'
+      echo '    <key>NSExtensionPrincipalClass</key><string>SafariWebExtensionHandler</string>'
+      echo '  </dict>'
+    fi
+    echo '</dict></plist>'
+  } > "$f"
+  plutil -lint "$f" >/dev/null
+}
 
-P="$APPEX/Contents/Info.plist"
-plist -c "Add :CFBundleDevelopmentRegion string en" \
-  -c "Add :CFBundleDisplayName string $APP_NAME" \
-  -c "Add :CFBundleExecutable string $APP_NAME Extension" \
-  -c "Add :CFBundleIdentifier string $EXT_ID" \
-  -c "Add :CFBundleInfoDictionaryVersion string 6.0" \
-  -c "Add :CFBundleName string $APP_NAME Extension" \
-  -c "Add :CFBundlePackageType string XPC!" \
-  -c "Add :CFBundleShortVersionString string $VERSION" \
-  -c "Add :CFBundleVersion string $BUILD_NUMBER" \
-  -c "Add :CFBundleSupportedPlatforms array" \
-  -c "Add :CFBundleSupportedPlatforms:0 string MacOSX" \
-  -c "Add :LSMinimumSystemVersion string $MIN_MACOS" \
-  -c "Add :NSHumanReadableCopyright string MIT License" \
-  -c "Add :NSExtension dict" \
-  -c "Add :NSExtension:NSExtensionPointIdentifier string com.apple.Safari.web-extension" \
-  -c "Add :NSExtension:NSExtensionPrincipalClass string SafariWebExtensionHandler" \
-  "$P"
+write_plist "$APPEX/Contents/Info.plist" \
+  CFBundleDevelopmentRegion en \
+  CFBundleDisplayName "$APP_NAME" \
+  CFBundleExecutable "$APP_NAME Extension" \
+  CFBundleIdentifier "$EXT_ID" \
+  CFBundleInfoDictionaryVersion 6.0 \
+  CFBundleName "$APP_NAME Extension" \
+  CFBundlePackageType 'XPC!' \
+  CFBundleShortVersionString "$VERSION" \
+  CFBundleVersion "$BUILD_NUMBER" \
+  LSMinimumSystemVersion "$MIN_MACOS" \
+  NSHumanReadableCopyright "MIT License"
 
-P="$APP/Contents/Info.plist"
-plist -c "Add :CFBundleDevelopmentRegion string en" \
-  -c "Add :CFBundleDisplayName string $APP_NAME" \
-  -c "Add :CFBundleExecutable string $APP_NAME" \
-  -c "Add :CFBundleIconFile string AppIcon" \
-  -c "Add :CFBundleIdentifier string $BUNDLE_ID" \
-  -c "Add :CFBundleInfoDictionaryVersion string 6.0" \
-  -c "Add :CFBundleName string $APP_NAME" \
-  -c "Add :CFBundlePackageType string APPL" \
-  -c "Add :CFBundleShortVersionString string $VERSION" \
-  -c "Add :CFBundleVersion string $BUILD_NUMBER" \
-  -c "Add :CFBundleSupportedPlatforms array" \
-  -c "Add :CFBundleSupportedPlatforms:0 string MacOSX" \
-  -c "Add :LSApplicationCategoryType string public.app-category.music" \
-  -c "Add :LSMinimumSystemVersion string $MIN_MACOS" \
-  -c "Add :NSPrincipalClass string NSApplication" \
-  -c "Add :BSFExtensionBundleIdentifier string $EXT_ID" \
-  "$P"
+write_plist "$APP/Contents/Info.plist" \
+  CFBundleDevelopmentRegion en \
+  CFBundleDisplayName "$APP_NAME" \
+  CFBundleExecutable "$APP_NAME" \
+  CFBundleIconFile AppIcon \
+  CFBundleIdentifier "$BUNDLE_ID" \
+  CFBundleInfoDictionaryVersion 6.0 \
+  CFBundleName "$APP_NAME" \
+  CFBundlePackageType APPL \
+  CFBundleShortVersionString "$VERSION" \
+  CFBundleVersion "$BUILD_NUMBER" \
+  LSApplicationCategoryType public.app-category.music \
+  LSMinimumSystemVersion "$MIN_MACOS" \
+  NSPrincipalClass NSApplication \
+  BSFExtensionBundleIdentifier "$EXT_ID"
 
 # Ad-hoc sign, inside-out. Safari requires sandboxed extensions.
 codesign --force --sign - --timestamp=none --options runtime \
